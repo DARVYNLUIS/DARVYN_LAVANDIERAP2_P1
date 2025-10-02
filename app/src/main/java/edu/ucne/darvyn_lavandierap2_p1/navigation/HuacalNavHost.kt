@@ -8,8 +8,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import edu.ucne.darvyn_lavandierap2_p1.navigation.HuacalScreen
-import edu.ucne.darvyn_lavandierap2_p1.presentation.HuacalEditScreen
 import edu.ucne.darvyn_lavandierap2_p1.presentation.ListHuacal.ListHuacalScreen
+import edu.ucne.darvyn_lavandierap2_p1.presentation.huacal.edit.HuacalEditScreen
 
 
 @Composable

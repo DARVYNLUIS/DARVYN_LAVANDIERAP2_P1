@@ -1,12 +1,12 @@
 package edu.ucne.darvyn_lavandierap2_p1.presentation.ListHuacal
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,30 +26,32 @@ fun ListHuacalScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    val cantidadRegistros = state.entradas.size
+    val totalPrecios = state.entradas.sumOf { it.precio }
+
     Scaffold(
         topBar = {
             TopAppBar(title = { Text("HUACALES") })
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onNavigateToCreate) {
-                Text("+")
-            }
-        }
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
-        Box(
+        Column(
             modifier = Modifier
                 .padding(padding)
                 .fillMaxSize()
         ) {
             if (state.entradas.isEmpty()) {
-                Text(
-                    text = "lISTA VACIA... INGRESE UNA ENTRADA",
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Text(
+                        text = "LISTA VACÍA... INGRESE UNA ENTRADA",
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
             } else {
                 LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
@@ -58,6 +60,7 @@ fun ListHuacalScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(8.dp)
+                                .clickable { onNavigateToEdit(entrada.idEntrada) }
                         ) {
                             Row(
                                 modifier = Modifier
@@ -75,24 +78,46 @@ fun ListHuacalScreen(
                                     Text("Precio: ${entrada.precio}")
                                     Text("Fecha: ${entrada.fecha}")
                                 }
-                                Row {
-                                    IconButton(onClick = { onNavigateToEdit(entrada.idEntrada) }) {
-                                        Icon(Icons.Default.Edit, contentDescription = "Editar")
-                                    }
-                                    IconButton(onClick = {
-                                        scope.launch {
-                                            viewModel.deleteEntrada(entrada.idEntrada) { message ->
-                                                scope.launch {
-                                                    snackbarHostState.showSnackbar(message)
-                                                }
+                                IconButton(onClick = {
+                                    scope.launch {
+                                        viewModel.deleteEntrada(entrada.idEntrada) { message ->
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(message)
                                             }
                                         }
-                                    }) {
-                                        Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                                     }
+                                }) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Eliminar")
                                 }
                             }
                         }
+                    }
+                }
+
+                // 👇 Botón redondo con "+"
+                FloatingActionButton(
+                    onClick = onNavigateToCreate,
+                    modifier = Modifier
+                        .align(Alignment.End)
+                        .padding(end = 16.dp, bottom = 8.dp)
+                ) {
+                    Text("+")
+                }
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.Start
+                    ) {
+                        Text("Cantidad de registros: $cantidadRegistros")
+                        Text("Total de precios: $totalPrecios")
                     }
                 }
             }
