@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "edu.ucne.registro"
+    namespace = "edu.ucne.darvyn_lavadierap2_p1"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "edu.ucne.registro"
+        applicationId = "edu.ucne.darvyn_lavadierap2_p1"
         minSdk = 26
         targetSdk = 36
         versionCode = 1
@@ -70,7 +70,7 @@ dependencies {
     implementation("androidx.room:room-ktx:2.6.1")
     implementation("androidx.compose.material3:material3:1.1.0-alpha02")
     implementation ("androidx.compose.material:material:1.4.0")
-    implementation("androidx.compose.material:material:1.3.1") // Usa la última versión
+    implementation("androidx.compose.material:material:1.3.1")
     implementation("androidx.compose.material:material-icons-extended")
 
 
