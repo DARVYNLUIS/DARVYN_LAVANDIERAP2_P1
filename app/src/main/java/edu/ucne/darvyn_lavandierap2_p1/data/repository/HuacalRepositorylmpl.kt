@@ -25,11 +25,16 @@ class HuacalRepositoryImpl @Inject constructor(
         return dao.findById(id)?.let { HuacalMapper.toDomain(it) }
     }
 
-    override fun observeEntradas(cliente: String?, fecha: String?): Flow<List<EntradaHuacal>> {
-        return dao.getEntradas().map { list ->
+    override fun observeEntradas(
+        cliente: String?,
+        fecha: String?,
+        cantidad: Int?
+    ): Flow<List<EntradaHuacal>> {
+        return dao.getEntradas(cliente, fecha, cantidad).map { list ->
             list.map { HuacalMapper.toDomain(it) }
         }
     }
+
 
     override suspend fun existePorClienteYCantidad(nombreCliente: String, fecha: String): Boolean {
         val entradas = dao.getEntradas(nombreCliente, fecha)

@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,12 +27,21 @@ fun ListHuacalScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    var filtroVisible by remember { mutableStateOf(false) }
+
     val cantidadRegistros = state.entradas.size
     val totalPrecios = state.entradas.sumOf { it.precio }
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("HUACALES") })
+            TopAppBar(
+                title = { Text("HUACALES") },
+                actions = {
+                    IconButton(onClick = { filtroVisible = !filtroVisible }) {
+                        Icon(Icons.Default.Menu, contentDescription = "Mostrar filtros")
+                    }
+                }
+            )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
@@ -40,6 +50,32 @@ fun ListHuacalScreen(
                 .padding(padding)
                 .fillMaxSize()
         ) {
+            if (filtroVisible) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        OutlinedTextField(
+                            value = state.clienteFilter ?: "",
+                            onValueChange = { viewModel.onClienteFilterChanged(it) },
+                            label = { Text("Filtrar por cliente") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = state.cantidadFilter?.toString() ?: "",
+                            onValueChange = { viewModel.onCantidadFilterChanged(it) },
+                            label = { Text("Filtrar por cantidad") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                    }
+                }
+            }
+
             if (state.entradas.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize()) {
                     Text(
@@ -94,7 +130,6 @@ fun ListHuacalScreen(
                     }
                 }
 
-                // 👇 Botón redondo con "+"
                 FloatingActionButton(
                     onClick = onNavigateToCreate,
                     modifier = Modifier
@@ -108,9 +143,7 @@ fun ListHuacalScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp),

@@ -7,5 +7,7 @@ data class ListHuacalUiState(
     val entradas: List<EntradaHuacal> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null,
-    val message: String? = null
+    val message: String? = null,
+    val clienteFilter: String? = null,
+    val cantidadFilter: Int? = null
 )

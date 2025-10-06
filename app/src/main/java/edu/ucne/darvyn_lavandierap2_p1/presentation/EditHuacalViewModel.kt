@@ -47,7 +47,6 @@ class EditHuacalViewModel @Inject constructor(
     private fun loadHuacal(id: Int) {
         viewModelScope.launch {
             if (id == 0) {
-                // Inicializar con fecha de hoy
                 val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
                 _state.update { it.copy(isNew = true, idEntrada = null, fecha = today) }
             } else {
