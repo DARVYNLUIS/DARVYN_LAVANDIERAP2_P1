@@ -1,118 +1,138 @@
 package edu.ucne.darvyn_lavandierap2_p1.presentation.huacal.edit
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import dagger.hilt.android.lifecycle.HiltViewModel
-import edu.ucne.darvyn_lavandierap2_p1.domain.Huacal.model.EntradaHuacal
-import edu.ucne.darvyn_lavandierap2_p1.domain.Huacal.UseCases.UpsertHuacalUseCase
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.*
-import javax.inject.Inject
 
-@HiltViewModel
-class EditHuacalViewModel @Inject constructor(
-    private val upsertHuacalUseCase: UpsertHuacalUseCase
-) : ViewModel() {
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HuacalEditScreen(
+    entradaId: Int?,
+    navController: NavController,
+    viewModel: EditHuacalViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    private val _state = MutableStateFlow(EditHuacalUiState())
-    val state: StateFlow<EditHuacalUiState> = _state.asStateFlow()
-
-    fun onEvent(event: EditHuacalUiEvent) {
-        when (event) {
-            is EditHuacalUiEvent.NombreClienteChanged ->
-                _state.update { it.copy(nombreCliente = event.nombre, nombreError = null) }
-
-            is EditHuacalUiEvent.FechaChanged ->
-                _state.update { it.copy(fecha = event.fecha, fechaError = null) }
-
-            is EditHuacalUiEvent.CantidadChanged ->
-                _state.update { it.copy(cantidad = event.cantidad, cantidadError = null) }
-
-            is EditHuacalUiEvent.PrecioChanged ->
-                _state.update { it.copy(precio = event.precio, precioError = null) }
-
-            is EditHuacalUiEvent.Load ->
-                loadHuacal(event.entradaId)
-
-            EditHuacalUiEvent.Save ->
-                saveHuacal()
+    LaunchedEffect(entradaId) {
+        entradaId?.let {
+            viewModel.onEvent(EditHuacalUiEvent.Load(it))
         }
     }
 
-    private fun loadHuacal(id: Int) {
-        viewModelScope.launch {
-            if (id == 0) {
-                val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                _state.update { it.copy(isNew = true, idEntrada = null, fecha = today) }
-            } else {
-                val entrada = upsertHuacalUseCase.getEntradaById(id)
-                entrada?.let {
-                    _state.update {
-                        it.copy(
-                            isNew = false,
-                            idEntrada = entrada.idEntrada,
-                            nombreCliente = entrada.nombreCliente,
-                            fecha = entrada.fecha,
-                            cantidad = entrada.cantidad.toString(),
-                            precio = entrada.precio.toString()
-                        )
-                    }
-                }
+    LaunchedEffect(state.message) {
+        state.message?.let { msg ->
+            scope.launch {
+                snackbarHostState.showSnackbar(msg)
+                viewModel.clearMessage()
             }
         }
     }
 
-    private fun saveHuacal() {
-        val current = state.value
-
-        val nombreError = if (current.nombreCliente.isBlank()) "El cliente es obligatorio" else null
-        val fechaError = if (current.fecha.isBlank()) "La fecha es obligatoria" else null
-        val cantidadError = if (current.cantidad.isBlank()) "La cantidad es obligatoria" else null
-        val precioError = if (current.precio.isBlank()) "El precio es obligatorio" else null
-
-        if (listOf(nombreError, fechaError, cantidadError, precioError).any { it != null }) {
-            _state.update {
-                it.copy(
-                    nombreError = nombreError,
-                    fechaError = fechaError,
-                    cantidadError = cantidadError,
-                    precioError = precioError
-                )
-            }
-            return
-        }
-
-        viewModelScope.launch {
-            _state.update { it.copy(isSaving = true) }
-
-            val entrada = EntradaHuacal(
-                idEntrada = current.idEntrada ?: 0,
-                nombreCliente = current.nombreCliente,
-                fecha = current.fecha,
-                cantidad = current.cantidad.toIntOrNull() ?: 0,
-                precio = current.precio.toDoubleOrNull() ?: 0.0
-            )
-
-            val result = upsertHuacalUseCase(entrada)
-            result.fold(
-                onSuccess = {
-                    _state.update {
-                        it.copy(isSaving = false, isSaved = true, message = "Huacal guardado correctamente")
-                    }
-                },
-                onFailure = { e ->
-                    _state.update { it.copy(isSaving = false, message = "Error: ${e.message}") }
-                }
-            )
+    LaunchedEffect(state.isSaved) {
+        if (state.isSaved) {
+            navController.popBackStack()
         }
     }
 
-    fun clearMessage() {
-        _state.update { it.copy(message = null) }
+    Scaffold(
+        topBar = {
+            SmallTopAppBar(title = { Text(if (state.isNew) "Nueva Entrada Huacal" else "Editar Entrada") })
+        },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(16.dp)
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.Start
+        ) {
+
+            OutlinedTextField(
+                value = state.nombreCliente,
+                onValueChange = { viewModel.onEvent(EditHuacalUiEvent.NombreClienteChanged(it)) },
+                label = { Text("Cliente") },
+                isError = state.nombreError != null,
+                modifier = Modifier.fillMaxWidth()
+            )
+            state.nombreError?.let {
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = state.fecha,
+                onValueChange = { viewModel.onEvent(EditHuacalUiEvent.FechaChanged(it)) },
+                label = { Text("Fecha (YYYY-MM-DD)") },
+                isError = state.fechaError != null,
+                modifier = Modifier.fillMaxWidth()
+            )
+            state.fechaError?.let {
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = state.cantidad,
+                onValueChange = { viewModel.onEvent(EditHuacalUiEvent.CantidadChanged(it)) },
+                label = { Text("Cantidad") },
+                isError = state.cantidadError != null,
+                modifier = Modifier.fillMaxWidth()
+            )
+            state.cantidadError?.let {
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = state.precio,
+                onValueChange = { viewModel.onEvent(EditHuacalUiEvent.PrecioChanged(it)) },
+                label = { Text("Precio") },
+                isError = state.precioError != null,
+                modifier = Modifier.fillMaxWidth()
+            )
+            state.precioError?.let {
+                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Button(
+                onClick = { viewModel.onEvent(EditHuacalUiEvent.Save) },
+                enabled = !state.isSaving,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (state.isSaving) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Text("Guardar")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedButton(
+                onClick = { navController.popBackStack() },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Cancelar")
+            }
+        }
     }
 }

@@ -23,6 +23,11 @@ interface HuacalesDao {
         SELECT * FROM EntradasHuacales
         WHERE (:cliente IS NULL OR nombreCliente LIKE '%' || :cliente || '%')
         AND (:fecha IS NULL OR fecha LIKE '%' || :fecha || '%')
+        AND (:cantidad IS NULL OR cantidad = :cantidad)
     """)
-    fun getEntradas(cliente: String? = null, fecha: String? = null): Flow<List<HuacalEntity>>
+    fun getEntradas(
+        cliente: String? = null,
+        fecha: String? = null,
+        cantidad: Int? = null
+    ): Flow<List<HuacalEntity>>
 }

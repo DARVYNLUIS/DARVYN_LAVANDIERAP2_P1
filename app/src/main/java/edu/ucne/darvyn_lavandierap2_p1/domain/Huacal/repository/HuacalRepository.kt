@@ -9,8 +9,11 @@ interface HuacalRepository {
     suspend fun delete(id: Int)
     suspend fun getEntrada(id: Int): EntradaHuacal?
 
-    fun observeEntradas(cliente: String? = null, fecha: String? = null): Flow<List<EntradaHuacal>>
+    fun observeEntradas(
+        cliente: String? = null,
+        fecha: String? = null,
+        cantidad: Int? = null
+    ): Flow<List<EntradaHuacal>>
 
     suspend fun existePorClienteYCantidad(nombreCliente: String, fecha: String): Boolean
 }
-
